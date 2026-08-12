@@ -1,2 +1,1 @@
-# news-aggregator
-A self-hosted news aggregator built with FastAPI, PostgreSQL, and pgvector — featuring RSS ingestion, semantic clustering via Ollama embeddings, and n8n automation. Free-tier compatible.
+A backend-focused news aggregation system that collects articles from curated RSS feeds, deduplicates and semantically clusters them using local embeddings (Ollama + pgvector), and exposes a REST API built with FastAPI. Orchestration is handled by n8n, which fetches feeds and posts to the API. Built as a learning project and portfolio piece — fully self-hosted, no paid services required.
