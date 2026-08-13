@@ -8,6 +8,7 @@ from app.crud.articles import get_article_by_url, create_article
 from app.schemas.articles import ArticleCreate
 from typing import Annotated
 import os
+import json
 
 key= os.getenv("N8N_API_KEY")
 router = APIRouter(prefix="/n8n")
@@ -27,8 +28,11 @@ async def ingestion(token: Annotated[str, Header()],article: ArticleCreate, db: 
         article= await create_article(db, article)
         await update_cluster(db, similar_cluster, article)
     else :
-        new_cluster= await generate_cluster(article)
-        new_cluster= await create_cluster(db, new_cluster)
+        new_cluster_raw = await generate_cluster(article)
+        cluster_data = json.loads(new_cluster_raw)
+        cluster_data["embedding"] = embed
+        new_cluster = ClusterCreate(**cluster_data)
+        new_cluster = await create_cluster(db, new_cluster)
         article.cluster_id= new_cluster.id
         await create_article(db, article)
 

@@ -3,12 +3,12 @@ import httpx
 
 async def embedding(text: str):
     body= {'model': 'nomic-embed-text','input': text}
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         response= await client.post('http://localhost:11434/api/embed', json=body)
     return response.json()["embeddings"][0]
 
 async def generate_cluster(article: Article):
-    body= {'model': 'llama3.2:3b' , 'prompt':f"""You are a news analyst. Given a news article title,
+    body= {'model': 'llama3.2:3b' ,"stream": False ,'prompt':f"""You are a news analyst. Given a news article title,
                                             return ONLY a JSON object with no explanation, no markdown, no backticks.
 
                                             Article title: {article.title}
@@ -28,6 +28,6 @@ async def generate_cluster(article: Article):
                                               "locations": ["list", "of", "locations"],
                                               "category": "politics|economy|technology|environment|health|conflict|other"
                                             }}"""}
-    async with httpx.AsyncClient() as client:
+async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post('http://localhost:11434/api/generate', json=body)
     return response.json()["response"]

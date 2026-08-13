@@ -1,15 +1,16 @@
 from datetime import datetime
-
+from typing import Optional
 from pydantic import BaseModel, HttpUrl
 
 class ArticleBase(BaseModel):
     title: str
     url: HttpUrl
     source: str
-    author: str
-    published_at: datetime
+    author: Optional[str] = None
+    published_at: Optional[datetime] = None 
 
 class ArticleCreate(ArticleBase):
+    cluster_id: Optional[int] = None
     pass
 
 class ArticleRead(ArticleBase):
