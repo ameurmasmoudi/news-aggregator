@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, func, ForeignKey, Text
+from sqlalchemy import DateTime, String, func, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
@@ -12,6 +12,6 @@ class Article(Base):
     url: Mapped[str] = mapped_column(String(2048), unique=True)
     source: Mapped[str] = mapped_column(String(100))
     author: Mapped[str] = mapped_column(String(100), nullable=True)
-    published_at: Mapped[datetime] = mapped_column(nullable=True)
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=True)
     fetched_at: Mapped[datetime] = mapped_column(server_default=func.now())
     cluster: Mapped["Cluster"] = relationship(back_populates="articles")

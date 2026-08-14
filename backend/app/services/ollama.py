@@ -8,26 +8,22 @@ async def embedding(text: str):
     return response.json()["embeddings"][0]
 
 async def generate_cluster(article: Article):
-    body= {'model': 'llama3.2:3b' ,"stream": False ,'prompt':f"""You are a news analyst. Given a news article title,
-                                            return ONLY a JSON object with no explanation, no markdown, no backticks.
+    body= {'model': 'qwen2.5:7b' ,"stream": False, 'prompt': f"""Return a JSON object. No text before. No text after. No markdown. No backticks. No trailing commas. Only the JSON.
 
-                                            Article title: {article.title}
-                                            Article source: {article.source}
+Title: {article.title}
+Source: {article.source}
 
-                                            Return this exact JSON structure:   
-                                            {{
-                                              "main_title": "concise event title",
-                                              "importance_score": <0-100>,
-                                              "urgency": "low|medium|high",
-                                              "novelty": "low|medium|high",
-                                              "event_type": "conflict|politics|economy|technology|environment|health|other",
-                                              "one_sentence_summary": "one sentence describing the event",
-                                              "why_important": "why this event matters",
-                                              "recommended_action": "what a reader should do or follow up on",
-                                              "countries_or_actors": ["list", "of", "countries", "or", "actors"],
-                                              "locations": ["list", "of", "locations"],
-                                              "category": "politics|economy|technology|environment|health|conflict|other"
-                                            }}"""}
-async with httpx.AsyncClient(timeout=60.0) as client:
+Output must start with {{ and end with }}. Copy this structure exactly, replacing only the values:
+
+{{"main_title":"title here","importance_score":50,"urgency":"medium","novelty":"medium","event_type":"politics","one_sentence_summary":"summary here","why_important":"reason here","recommended_action":"action here","countries_or_actors":["country1"],"locations":["location1"],"category":"politics"}}
+
+Valid urgency values: low, medium, high
+Valid novelty values: low, medium, high
+Valid event_type values: conflict, politics, economy, technology, environment, health, other
+Valid category values: politics, economy, technology, environment, health, conflict, society
+
+JSON:""" 
+           }
+    async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post('http://localhost:11434/api/generate', json=body)
     return response.json()["response"]

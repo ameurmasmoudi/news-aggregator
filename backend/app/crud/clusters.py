@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
-
+from sqlalchemy.orm import selectinload
 from app.models.articles import Article
 from app.schemas.clusters import ClusterCreate
-from sqlalchemy import select
+from sqlalchemy import String, select, Boolean, any_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.clusters import Cluster
 from pgvector.sqlalchemy import Vector
@@ -11,17 +11,17 @@ async def create_cluster(db: AsyncSession, cluster_to_create: ClusterCreate):
     cluster=Cluster(**cluster_to_create.model_dump())
     db.add(cluster)
     await db.commit()
-    await db.refresh(cluster)
+    await db.refresh(cluster) 
     return cluster
 
 async def get_cluster_by_id(db: AsyncSession, id: int):
-    stmt= select(Cluster).where(Cluster.id == id)
+    stmt= select(Cluster).where(Cluster.id == id).options(selectinload(Cluster.articles))
     result= await db.scalars(stmt)
     cluster= result.one_or_none()
     return cluster
 
 async def get_clusters(db: AsyncSession):
-    stmt= select(Cluster)
+    stmt= select(Cluster).options(selectinload(Cluster.articles))
     result= await db.scalars(stmt)
     clusters= result.all()
     return clusters
@@ -46,3 +46,14 @@ async def find_similar_clusters(db: AsyncSession, vect: Vector):
         return cluster
     return None
 
+async def get_clusters_by_category(db: AsyncSession, category: str):
+    stmt = select(Cluster).where(Cluster.category == category).options(selectinload(Cluster.articles))
+    result= await db.scalars(stmt)
+    clusters= result.all()
+    return clusters
+
+async def get_clusters_about_tunisia(db: AsyncSession):
+    stmt = select(Cluster).where(or_(Cluster.sources.overlap(["kapitalis" , "nawaat"]), any_(Cluster.locations) =="Tunisia", any_(Cluster.countries_or_actors)=="Tunisia")).options(selectinload(Cluster.articles))
+    result= await db.scalars(stmt)
+    clusters= result.all()
+    return clusters
