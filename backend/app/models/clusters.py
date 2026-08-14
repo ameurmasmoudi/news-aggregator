@@ -26,3 +26,4 @@ class Cluster (Base):
     sources: Mapped[list] = mapped_column(ARRAY(String))
     vector = mapped_column(Vector(768))
     articles: Mapped[list["Article"]] = relationship(back_populates="cluster")
+    image: Mapped[str] = mapped_column(String(2048), nullable=True)

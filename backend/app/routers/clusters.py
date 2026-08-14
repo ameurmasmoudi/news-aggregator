@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter(prefix="/clusters", tags=["clusters"])
 
 @router.get("/", response_model=list[ClusterRead])
-async def read_clusters(category: Optional[str] = None,tunisian: bool = False, db: AsyncSession = Depends(get_db)):
+async def read_clusters(category: Optional[str] = None,tunisian: bool = False db: AsyncSession = Depends(get_db)):
     if tunisian:
         return await get_clusters_about_tunisia(db)
     if category:

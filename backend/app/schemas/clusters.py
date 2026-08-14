@@ -15,6 +15,7 @@ class ClusterBase(BaseModel):
     locations: list[str] = []
     sources: list[str] = []
     category: str | None = None
+    image: str | None = None
 
 class ClusterCreate(ClusterBase):
     pass

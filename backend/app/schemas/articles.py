@@ -11,6 +11,7 @@ class ArticleBase(BaseModel):
 
 class ArticleCreate(ArticleBase):
     cluster_id: Optional[int] = None
+    image_url: Optional[str] = None
     pass
 
 class ArticleRead(ArticleBase):
