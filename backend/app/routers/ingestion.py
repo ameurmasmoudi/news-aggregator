@@ -1,4 +1,5 @@
 import logging 
+from app.services.scarper import fetch_og_image
 from fastapi import APIRouter, Depends, Header, status, HTTPException
 from app.db import get_db
 from app.crud.clusters import create_cluster, update_cluster, find_similar_clusters
@@ -41,6 +42,8 @@ async def ingestion(token: Annotated[str, Header()],article: ArticleCreate, db: 
             logger.error(f"LLM returned invalid JSON: {e}")
             return
         cluster_data["embedding"] = embed
+        if not article.image_url:
+            article.image_url = await fetch_og_image(str(article.url))
         cluster_data["image"]=article.image_url
         try:
             new_cluster = ClusterCreate(**cluster_data)

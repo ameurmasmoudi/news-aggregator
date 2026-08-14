@@ -14,6 +14,7 @@ async def get_article_by_url(db: AsyncSession, url: HttpUrl):
 async def create_article(db: AsyncSession, article_to_add: ArticleCreate):
     data = article_to_add.model_dump()
     data["url"] = str(data["url"])
+    data.pop("image_url", None)
     article = Article(**data)
     db.add(article)
     await db.commit()
