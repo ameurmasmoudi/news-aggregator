@@ -7,10 +7,7 @@ class ClusterBase(BaseModel):
     importance_score: int
     urgency: str
     novelty: str
-    event_type: str
     one_sentence_summary: str | None
-    why_important: str
-    recommended_action: str | None
     countries_or_actors: list[str] = []
     locations: list[str] = []
     sources: list[str] = []
@@ -18,7 +15,7 @@ class ClusterBase(BaseModel):
     image: str | None = None
 
 class ClusterCreate(ClusterBase):
-    pass
+    latest_published_at: datetime | None = None
 
 class ClusterRead(ClusterBase):
     id: int
@@ -28,4 +25,12 @@ class ClusterRead(ClusterBase):
     articles: list[ArticleRead]= []
 
     model_config = {"from_attributes": True}
+
+class ClusterSummary(ClusterBase):
+    id: int
+    article_count: int
+    latest_published_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
 

@@ -15,12 +15,11 @@ Source: {article.source}
 
 Output must start with {{ and end with }}. Copy this structure exactly, replacing only the values:
 
-{{"main_title":"title here","importance_score":50,"urgency":"medium","novelty":"medium","event_type":"politics","one_sentence_summary":"summary here","why_important":"reason here","recommended_action":"action here","countries_or_actors":["country1"],"locations":["location1"],"category":"politics"}}
+{{"main_title":"title here","importance_score":50,"urgency":"medium","novelty":"medium","one_sentence_summary":"summary here","countries_or_actors":["country1"],"locations":["location1"],"category":"politics"}}
 
 Valid urgency values: low, medium, high
 Valid novelty values: low, medium, high
-Valid event_type values: conflict, politics, economy, technology, environment, health, other
-Valid category values: politics, economy, technology, environment, health, conflict, society
+Valid category values: politics, economy, technology, environment, health, conflict, society, science
 
 JSON:""" 
            }

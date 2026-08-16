@@ -14,10 +14,7 @@ class Cluster (Base):
     importance_score: Mapped[int] = mapped_column(CheckConstraint("importance_score BETWEEN 0 AND 100"))
     urgency: Mapped[str] = mapped_column(String(10))
     novelty: Mapped[str] = mapped_column(String(10))
-    event_type: Mapped[str] = mapped_column()
     one_sentence_summary: Mapped[str] = mapped_column(Text(), nullable=True)
-    why_important:  Mapped[str] = mapped_column(Text(), nullable=True)
-    recommended_action: Mapped[str] = mapped_column(Text(), nullable=True)
     category: Mapped[str] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now())
     countries_or_actors: Mapped[list] = mapped_column(ARRAY(String))
@@ -27,3 +24,7 @@ class Cluster (Base):
     vector = mapped_column(Vector(768))
     articles: Mapped[list["Article"]] = relationship(back_populates="cluster")
     image: Mapped[str] = mapped_column(String(2048), nullable=True)
+
+    @property
+    def article_count(self) -> int :
+        return len(self.articles)

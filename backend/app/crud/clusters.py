@@ -20,8 +20,8 @@ async def get_cluster_by_id(db: AsyncSession, id: int):
     cluster= result.one_or_none()
     return cluster
 
-async def get_clusters(db: AsyncSession):
-    stmt= select(Cluster).options(selectinload(Cluster.articles))
+async def get_clusters(db: AsyncSession,limit: int,offset:int):
+    stmt= select(Cluster).options(selectinload(Cluster.articles)).order_by(Cluster.latest_published_at.desc().nulls_last()).limit(limit).offset(offset)
     result= await db.scalars(stmt)
     clusters= result.all()
     return clusters
@@ -33,6 +33,10 @@ async def update_cluster(db: AsyncSession, cluster_to_update: Cluster, article: 
     if not (article.source in cluster.sources):
         cluster.sources.append(article.source)
     cluster.articles.append(article)
+    if not cluster.image :
+        if not article.image_url :
+            article.image_url = await fetch_og_image(str(article.url))
+        cluster.image = article.image_url    
     await db.commit()
     await db.refresh(cluster)
     return cluster
@@ -46,14 +50,14 @@ async def find_similar_clusters(db: AsyncSession, vect: Vector):
         return cluster
     return None
 
-async def get_clusters_by_category(db: AsyncSession, category: str):
-    stmt = select(Cluster).where(Cluster.category == category).options(selectinload(Cluster.articles))
+async def get_clusters_by_category(db: AsyncSession, category: str,limit:int,offset:int):
+    stmt = select(Cluster).where(Cluster.category == category).options(selectinload(Cluster.articles)).order_by(Cluster.latest_published_at.desc().nulls_last()).limit(limit).offset(offset)
     result= await db.scalars(stmt)
     clusters= result.all()
     return clusters
 
-async def get_clusters_about_tunisia(db: AsyncSession):
-    stmt = select(Cluster).where(or_(Cluster.sources.overlap(["kapitalis" , "nawaat"]), any_(Cluster.locations) =="Tunisia", any_(Cluster.countries_or_actors)=="Tunisia")).options(selectinload(Cluster.articles))
+async def get_clusters_about_tunisia(db: AsyncSession,limit:int,offset:int):
+    stmt = select(Cluster).where(or_(Cluster.sources.overlap(["kapitalis" , "nawaat"]), any_(Cluster.locations) =="Tunisia", any_(Cluster.countries_or_actors)=="Tunisia")).options(selectinload(Cluster.articles)).order_by(Cluster.latest_published_at.desc().nulls_last()).limit(limit).offset(offset)
     result= await db.scalars(stmt)
     clusters= result.all()
     return clusters
