@@ -6,6 +6,7 @@ from sqlalchemy import String, select, Boolean, any_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.clusters import Cluster
 from pgvector.sqlalchemy import Vector
+from app.services.scarper import fetch_og_image
 
 async def create_cluster(db: AsyncSession, cluster_to_create: ClusterCreate):
     cluster=Cluster(**cluster_to_create.model_dump())
