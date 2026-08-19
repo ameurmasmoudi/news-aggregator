@@ -30,7 +30,7 @@ class ClusterSummary(ClusterBase):
     id: int
     article_count: int
     latest_published_at: datetime | None = None
-
+    score:float | None = None
     model_config = {"from_attributes": True}
 
 
