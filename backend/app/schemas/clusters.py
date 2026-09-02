@@ -4,9 +4,10 @@ from pydantic import BaseModel, HttpUrl
 
 class ClusterBase(BaseModel):
     main_title: str
-    importance_score: int
+    life_impact: str | None = None
+    stage: str | None = None
+    people_affected_stated: int = 0
     urgency: str
-    novelty: str
     one_sentence_summary: str | None
     countries_or_actors: list[str] = []
     locations: list[str] = []
@@ -16,6 +17,7 @@ class ClusterBase(BaseModel):
 
 class ClusterCreate(ClusterBase):
     latest_published_at: datetime | None = None
+    vector:list[float] |None = None 
 
 class ClusterRead(ClusterBase):
     id: int

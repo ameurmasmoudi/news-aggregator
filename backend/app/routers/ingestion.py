@@ -41,7 +41,7 @@ async def ingestion(token: Annotated[str, Header()],article: ArticleCreate, db: 
         except Exception as e:
             logger.error(f"LLM returned invalid JSON: {e}")
             return
-        cluster_data["embedding"] = embed
+        cluster_data["vector"] = embed
         if not article.image_url:
             article.image_url = await fetch_og_image(str(article.url))
         cluster_data["image"]=article.image_url
