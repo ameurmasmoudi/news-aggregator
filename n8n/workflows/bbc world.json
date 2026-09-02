@@ -1,0 +1,165 @@
+{
+  "name": "bbc world",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        144,
+        0
+      ],
+      "id": "8b42604a-8133-44e7-b683-96cde33808e2",
+      "name": "RSS Read",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        352,
+        0
+      ],
+      "id": "cf7983b2-cd16-42f6-8303-88f24420463a",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/n8n/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "={{ $env.N8N_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "name": "url",
+              "value": "={{ $json.link }}"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.contentSnippet }}"
+            },
+            {
+              "name": "source",
+              "value": "bbc_world"
+            },
+            {
+              "name": "author",
+              "value": "={{ $json.creator ?? null }}"
+            },
+            {
+              "name": "published_at",
+              "value": "={{ $json.isoDate }}"
+            },
+            {
+              "name": "image_url",
+              "value": "={{ $json.enclosure?.url ?? $json.mediaContent?.url ?? $json.image?.url ?? null }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        208
+      ],
+      "id": "628be9cf-092e-4de5-8408-828edfed2572",
+      "name": "HTTP Request",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -48,
+        0
+      ],
+      "id": "a891a67f-8060-4983-94c2-460b4e4bc548",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ba256751-7eaf-429e-bf94-b204e93c55db",
+  "meta": {
+    "instanceId": "1ef2c5c722bcc82f02bacf4a978ba5b8f1b06b81b38468cd6ee6aa6fa08abfea"
+  },
+  "nodeGroups": [],
+  "id": "p60xRbvorXdEg9O8",
+  "tags": []
+}

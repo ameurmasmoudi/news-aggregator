@@ -1,0 +1,165 @@
+{
+  "name": "kapitalis",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://kapitalis.com/tunisie/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        144,
+        0
+      ],
+      "id": "a7a8622d-4644-432a-bf56-598b67033d1b",
+      "name": "RSS Read",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        352,
+        0
+      ],
+      "id": "b9e11e5c-a8ad-4bf7-843e-7006562e163e",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/n8n/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "={{ $env.N8N_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "name": "url",
+              "value": "={{ $json.link }}"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.contentSnippet }}"
+            },
+            {
+              "name": "source",
+              "value": "kapitalis"
+            },
+            {
+              "name": "author",
+              "value": "={{ $json.creator }}"
+            },
+            {
+              "name": "published_at",
+              "value": "={{ $json.isoDate }}"
+            },
+            {
+              "name": "image_url",
+              "value": "={{ $json.enclosure?.url ?? $json.mediaContent?.url ?? $json.image?.url ?? null }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        208
+      ],
+      "id": "ee1450b6-48fd-430f-bc78-3ca0fe7e85eb",
+      "name": "HTTP Request",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "8351e6dc-88d2-4e2a-bf7d-c4c2843645da",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e4559403-3a5d-4b43-8c80-c44c8ff78d13",
+  "meta": {
+    "instanceId": "1ef2c5c722bcc82f02bacf4a978ba5b8f1b06b81b38468cd6ee6aa6fa08abfea"
+  },
+  "nodeGroups": [],
+  "id": "10CM6FpOCimFeu1L",
+  "tags": []
+}
