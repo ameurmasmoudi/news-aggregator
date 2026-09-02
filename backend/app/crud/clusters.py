@@ -3,7 +3,7 @@ from typing import Literal
 from sqlalchemy.orm import selectinload
 from app.models.articles import Article
 from app.schemas.clusters import ClusterCreate
-from sqlalchemy import String, select, Boolean, any_, or_, case, func
+from sqlalchemy import String, select, Boolean, any_, or_, and_, case, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.clusters import Cluster
 from pgvector.sqlalchemy import Vector
@@ -23,9 +23,9 @@ async def get_cluster_by_id(db: AsyncSession, id: int):
     cluster= result.one_or_none()
     return cluster
 
-async def get_clusters(db: AsyncSession,sort: Literal["latest","top"],window: Literal["24h","7d","30d","all"],as_of: datetime,limit: int,offset:int):
+async def get_clusters(db: AsyncSession,sort: Literal["latest","top"],window: Literal["24h","7d","30d","all"],as_of: datetime,limit: int,offset:int,q:str |None = None):
     stmt= select(Cluster).options(selectinload(Cluster.articles))
-    stmt = apply_feed(stmt,sort,window,as_of,limit,offset)
+    stmt = apply_feed(stmt,sort,window,as_of,limit,offset,q)
     result= await db.execute(stmt)
     clusters= []
     for cluster,score in result.all():
@@ -59,9 +59,9 @@ async def find_similar_clusters(db: AsyncSession, vect: Vector):
         return cluster
     return None
 
-async def get_clusters_by_category(db: AsyncSession, category: str,sort: Literal["latest","top"],window: Literal["24h","7d","30d","all"],as_of: datetime,limit:int,offset:int):
+async def get_clusters_by_category(db: AsyncSession, category: str,sort: Literal["latest","top"],window: Literal["24h","7d","30d","all"],as_of: datetime,limit:int,offset:int,q:str |None = None):
     stmt = select(Cluster).where(Cluster.category == category).options(selectinload(Cluster.articles))
-    stmt = apply_feed(stmt,sort,window,as_of,limit,offset)
+    stmt = apply_feed(stmt,sort,window,as_of,limit,offset,q)
     result= await db.execute(stmt)
     clusters= []
     for cluster,score in result.all():
@@ -70,9 +70,9 @@ async def get_clusters_by_category(db: AsyncSession, category: str,sort: Literal
     return clusters
 
 
-async def get_clusters_about_tunisia(db: AsyncSession,sort: Literal["latest","top"],window: Literal["24h","7d","30d","all"],as_of:datetime,limit:int,offset:int):
+async def get_clusters_about_tunisia(db: AsyncSession,sort: Literal["latest","top"],window: Literal["24h","7d","30d","all"],as_of:datetime,limit:int,offset:int,q:str |None = None):
     stmt = select(Cluster).where(or_(Cluster.sources.overlap(["kapitalis" , "nawaat"]), any_(Cluster.locations) =="Tunisia", any_(Cluster.countries_or_actors)=="Tunisia")).options(selectinload(Cluster.articles))
-    stmt = apply_feed(stmt,sort,window,as_of,limit,offset)
+    stmt = apply_feed(stmt,sort,window,as_of,limit,offset,q)
     result= await db.execute(stmt)
     clusters= []
     for cluster,score in result.all():
@@ -82,6 +82,7 @@ async def get_clusters_about_tunisia(db: AsyncSession,sort: Literal["latest","to
 
 def weight_map(col, mapping, default):
     return case(*[(col == k, float(v)) for k, v in mapping.items()], else_=default)
+
 def score_expr(as_of: datetime):
     topic   = weight_map(Cluster.category,    cfg.TOPIC_WEIGHT,   1.0)
     impact  = weight_map(Cluster.life_impact, cfg.IMPACT_WEIGHT,  0.5)
@@ -93,7 +94,7 @@ def score_expr(as_of: datetime):
     toll = func.least(func.log(Cluster.people_affected_stated + 1) / cfg.TOLL_LOG_DIVISOR, 1.0)
 
     story_age_hours = func.extract("epoch", as_of - Cluster.created_at) / 3600.0
-    novelty = func.power(0.5, story_age_hours / cfg.STORY_HALF_LIFE_HOURS)
+    novelty = func.power(0.5, func.least(story_age_hours / cfg.STORY_HALF_LIFE_HOURS,700.0))
 
     w = cfg.PART_WEIGHT
     substance = (w["impact"]   * impact
@@ -105,14 +106,16 @@ def score_expr(as_of: datetime):
 
     age_hours = func.greatest(func.extract("epoch", as_of - Cluster.latest_published_at), 0) / 3600.0
     decay = case((Cluster.latest_published_at.is_(None), 0.0),
-                 else_=func.power(0.5, age_hours / cfg.HALF_LIFE_HOURS))
+                 else_=func.power(0.5, func.least(age_hours / cfg.HALF_LIFE_HOURS,700.0)))
 
     return (topic * substance * decay).label("score")
 
 window_dict={"24h":timedelta(hours=24),"7d":timedelta(days=7),"30d":timedelta(days=30)}
-def apply_feed(stmt:select,sort: Literal["latest","top"],window: Literal["24h","7d","30d","all"],as_of: datetime,limit:int,offset:int):
+def apply_feed(stmt:select,sort: Literal["latest","top"],window: Literal["24h","7d","30d","all"],as_of: datetime,limit:int,offset:int,q:str | None = None):
     score=score_expr(as_of)
     stmt= stmt.add_columns(score)
+    if q:
+        stmt = stmt.where(_like_filter(q))
     if window in {"24h","7d","30d"}:
         delta= window_dict[window]
         stmt = stmt.where(Cluster.latest_published_at>(as_of - delta))
@@ -122,3 +125,16 @@ def apply_feed(stmt:select,sort: Literal["latest","top"],window: Literal["24h","
         stmt= stmt.order_by(score.desc()).order_by(Cluster.id.desc())
     stmt= stmt.limit(limit).offset(offset)
     return(stmt)
+
+def _like_filter(q: str):
+    clauses = []
+    for token in q.split():
+        safe = token.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        pattern = f"%{safe}%"
+        clauses.append(or_(
+            Cluster.main_title.ilike(pattern, escape="\\"),
+            Cluster.one_sentence_summary.ilike(pattern, escape="\\"),
+        ))
+    return and_(*clauses)
+
+
