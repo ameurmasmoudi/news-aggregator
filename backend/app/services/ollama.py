@@ -2,7 +2,7 @@ from app.models.articles import Article
 import httpx
 import os
 
-base_url= os.getenv("OLLAMA_URL")
+ollama_url= os.getenv("OLLAMA_URL")
 CLUSTER_SCHEMA = {
     "type": "object",
     "properties": {
@@ -120,12 +120,12 @@ Now score the headline above."""
  
 async def embedding(text: str):
     body= {'model': 'nomic-embed-text','input': text}
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response= await client.post(base_url + "/embed", json=body)
+    async with httpx.AsyncClient(timeout=30.0,base_url=ollama_url) as client:
+        response= await client.post("/embed", json=body)
     return response.json()["embeddings"][0]
 
 async def generate_cluster(article: Article):
     body= {'model': 'qwen2.5:3b' ,"stream": False,"system": SYSTEM,"prompt": PROMPT.format(title=article.title,source=article.source),"format": CLUSTER_SCHEMA,"options": {"temperature":0,"num_predict": 400}         }
-    async with httpx.AsyncClient(timeout=300.0) as client:
-        response = await client.post(base_url + "generate", json=body)
+    async with httpx.AsyncClient(timeout=300.0,base_url=ollama_url) as client:
+        response = await client.post("/generate", json=body)
     return response.json()["response"]
