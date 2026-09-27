@@ -32,5 +32,5 @@ async def test_ingestion(httpx_mock):
         status_code=200
             )
     async with httpx.AsyncClient(timeout=30.0,base_url=base) as client:
-        response= await client.post("/n8n/",json=ArticleTest.model_dump(),headers=header)
+        response= await client.post("/n8n/",json=ArticleTest.model_dump(mode="json"),headers=header)
     assert response.status_code == 200
