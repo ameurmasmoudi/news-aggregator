@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 ollama_url=os.getenv("OLLAMA_URL")
 key= os.getenv("N8N_API_KEY")
 ArticleTest= ArticleCreate(title="test",url="https://www.test.com",source="test",author="test")
-ClusterTest= ClusterCreate(main_title="test",life_impact="high",stage="done",people_affected_stated=0,one_sentence_summary="this is a test cluster")
+ClusterTest= ClusterCreate(main_title="test",urgency="low",category="politics",life_impact="prices",stage="happened",people_affected_stated=0,countries_or_actors=[],one_sentence_summary="this is a test cluster",locations=[])
 TestVector= [0.1]*768
 base= "http://localhost:8000"
 
