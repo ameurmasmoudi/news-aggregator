@@ -69,5 +69,5 @@ jobs:
         working-directory: backend/
 
       - name: remove test article
-        run: PGPASSWORD=${{secrets.DB_PASSWORD}} psql -U ${{secrets.DB_USER}} -d ${{secrets.DB_NAME}} -c "DELETE FROM articles WHERE title = 'test'; DELETE FROM clusters WHERE main_title = 'test'"
+        run: PGPASSWORD=${{secrets.DB_PASSWORD}} psql -U ${{secrets.DB_USER}} -d ${{secrets.DB_NAME}} -h localhost -c "DELETE FROM articles WHERE title = 'test'; DELETE FROM clusters WHERE main_title = 'test'"
         if: always()
