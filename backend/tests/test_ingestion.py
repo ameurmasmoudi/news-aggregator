@@ -5,7 +5,7 @@ import pytest
 import os
 import logging
 from httpx import AsyncClient, ASGITransport
-from app.main import app
+from main import app
 
 logger = logging.getLogger(__name__)
 
