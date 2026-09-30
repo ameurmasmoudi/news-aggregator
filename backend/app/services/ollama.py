@@ -3,6 +3,7 @@ import httpx
 import os
 
 ollama_url= os.getenv("OLLAMA_URL")
+ollama_header= os.getenv("OLLAMA_HEADER")
 CLUSTER_SCHEMA = {
     "type": "object",
     "properties": {
@@ -117,15 +118,19 @@ approved the 2027 budget following three days of debate.","category":"economy",
 Headline: {title}
 Outlet: {source}
 Now score the headline above."""
+
+header= {
+        "X-Tunnel-Secret": ollama_header
+        }
  
 async def embedding(text: str):
     body= {'model': 'nomic-embed-text','input': text}
     async with httpx.AsyncClient(timeout=30.0,base_url=ollama_url) as client:
-        response= await client.post("/embed", json=body)
+        response= await client.post("/embed", headers=header, json=body)
     return response.json()["embeddings"][0]
 
 async def generate_cluster(article: Article):
     body= {'model': 'qwen2.5:3b' ,"stream": False,"system": SYSTEM,"prompt": PROMPT.format(title=article.title,source=article.source),"format": CLUSTER_SCHEMA,"options": {"temperature":0,"num_predict": 400}         }
     async with httpx.AsyncClient(timeout=300.0,base_url=ollama_url) as client:
-        response = await client.post("/generate", json=body)
+        response = await client.post("/generate", headers=header, json=body)
     return response.json()["response"]

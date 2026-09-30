@@ -7,7 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ secrets.DB_NAME }}
-      OLLAMA_URL: http://localhost:11434/api
+      OLLAMA_URL: ${{ secrets.OLLAMA_URL}}
+      OLLAMA_HEADER: ${{ secrets.OLLAMA_HEADER}}
       N8N_API_KEY: ${{ secrets.N8N_API_KEY}}
     services:
       postgres:
